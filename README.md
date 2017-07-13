@@ -4,11 +4,12 @@ Below you'll find information about performing common tasks. The most recent ver
 
 ## To-do
 
-- [] Show victory
-- [] Show loss
-- [] Choose board size
-- [] Choose dificulty
-- [] Remove flag on single click and block reveal
+- [ ] Show victory
+- [ ] Show loss
+- [ ] Choose board size
+- [ ] Choose dificulty
+- [ ] Remove flag on single click and block reveal
+- [ ] Reveal flagged bombs on victory/loss
 
 ## Table of Contents
 

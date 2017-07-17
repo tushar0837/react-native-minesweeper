@@ -25,7 +25,7 @@ export default class index extends React.Component {
 			  		color="#841584"
 			  		accessibilityLabel=""
 			  	/>
-	      	</View>
+	      	</View >
 	  );
   }
 }

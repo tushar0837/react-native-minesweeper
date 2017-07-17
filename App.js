@@ -23,14 +23,6 @@ import IndexPage from './index';
 
 export default class App extends React.Component {
   
-  // render()  {
-  
-	 //  return(
-		//   <View style={styles.view}>
-  //       <Gameboard x={5} y={5} difficulty={0.2} />
-  //     </View>
-	 //  );
-  // }
   render () {
     return (
         <Navigator

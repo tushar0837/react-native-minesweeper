@@ -22,6 +22,12 @@ import IndexPage from './index';
 // };
 
 export default class App extends React.Component {
+
+  state = {
+    x: 8,
+    y: 8,
+    difficulty: 0.2
+  }
   
   render () {
     return (
@@ -29,11 +35,11 @@ export default class App extends React.Component {
             initialRoute={{id: 'IndexPage', name: 'Index'}}
             renderScene={this.renderScene.bind(this)}
             configureScene={(route) => {
-        if (route.sceneConfig) {
-          return route.sceneConfig;
-        }
-        return Navigator.SceneConfigs.VerticalDownSwipeJump;
-      }}/>
+              if (route.sceneConfig) {
+                return route.sceneConfig;
+              }
+              return Navigator.SceneConfigs.VerticalDownSwipeJump;
+            }}/>
     );
    }
    renderScene ( route, navigator ) {
@@ -41,13 +47,14 @@ export default class App extends React.Component {
     if (routeId === 'IndexPage') {
         return (
             <IndexPage
+                setParams={(x, y, difficulty) => this.setState({x, y, difficulty})}
                 navigator={navigator}/>
         );
     }
     if (routeId === 'Gameboard') {
         return (
             <Gameboard
-                x={8} y={8} difficulty={0.2} navigator={navigator}/>
+                {...this.state} navigator={navigator}/>
         );
     }
   }

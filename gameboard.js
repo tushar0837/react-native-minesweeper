@@ -17,7 +17,8 @@ import {
   ViewPagerAndroid,
   ScrollView,
   TouchableOpacity,
-  TouchableHighlight
+  TouchableHighlight,
+  ToastAndroid
 } from 'react-native';
 import { includes, each, flatten, slice, indexOf, difference} from 'lodash';
 
@@ -45,6 +46,14 @@ const styles2 = StyleSheet.create({
   }
 });
 
+const colors = {
+  0: '#EEEEEE',
+  1: '#7FFF00',
+  2: 'blue',
+  bomb: 'black',
+  flag: '#ffe0bd',
+  default: 'red'
+};
 
 export default class Gameboard extends Component {
 
@@ -60,31 +69,42 @@ export default class Gameboard extends Component {
     difficulty: 0.3
   };
 
-  colors = {
-    0: '#EEEEEE',
-    1: '#7FFF00',
-    2: 'blue',
-    bomb: 'black',
-    flag: 'red',
-    default: 'red'
+  bomb = "💣";
+  diffusedBomb= "👍";
+
+  getInitialState = () => ({
+    board: [],
+    revealedButtons: [],
+    flaggedButtons: [],
+    flaggedBomb: [],
+    completed: false,
+    flag: "🚩",
+    revealNoBomb: false
+  });
+
+  state = this.getInitialState();
+
+  componentWillMount = () => {
+    this.renderBoard();
   };
 
-  bomb = "💣";
-  flag = "🚩";
-  diffusedBomb= "👍";
-  completed= false;
-  emptyArray = [];
+  componentDidUpdate = (prevProps, prevState) => {
+    const allChecked = this.state.revealedButtons.length + this.state.flaggedButtons.length;
+    const areAllChecked = allChecked === (this.props.x * this.props.y);
+    const areAllBombsChecked = (difference(this.state.flaggedButtons, this.state.flaggedBomb).length === 0) && (difference(this.state.flaggedBomb, this.state.flaggedButtons).length === 0);
+    if (areAllChecked && areAllBombsChecked && !this.state.completed){
+      Alert.alert("Aaho, fadle !");
+    }
+    if (this.state.completed){
+      Alert.alert("Chal bc !")
+    }
+  };
 
-  constructor(props) {
-    super(props);
-    this.state = {
-    	board: [],
-      revealedButtons: [],
-      flaggedButtons: [],
-      flaggedBomb: [],
-    }    
-  }
-
+  newGame = () => {
+    this.setState(this.getInitialState, () => {
+      this.renderBoard();
+    });
+  };
   
   getAllBombs = (gameboard, allbombs) => {
     let board = flatten(gameboard || this.state.board);
@@ -111,44 +131,54 @@ export default class Gameboard extends Component {
       indexFromBase += i ? bomb + 1 : bomb;
       this.revealArray(...this.getCoordinatesFromIndex(indexFromBase), true, true);
     });
-    this.completed = true;
+    this.setState({completed: true, flag: "🖕"});
   };
 
   revealArray = (i,j, stopRecursion, lost) => {
-    if (this.checkIfRevealed(i, j, true)){
-      if (lost){
-        this.flaggedBombs(i,j);
-      }
-      else {
-        this.flags(i, j);
-      }
+    if (this.state.completed && !lost){
+      ToastAndroid.showWithGravity('Bhai nayi game lgaa le', ToastAndroid.SHORT, ToastAndroid.BOTTOM);
     }
-    else{  
-      const { revealedButtons }= this.state;
-      revealedButtons.push(i*10 + j);
-      this.setState({ revealedButtons });
-      if (!stopRecursion) {
-        if (this.state.board[i][j]==this.bomb){
-          this.revealAllBombs();
+    else{
+      if (this.checkIfRevealed(i, j, true)){
+        if (lost){
+          this.flaggedBombs(i,j);
         }
-        if (this.state.board[i][j] == 0){
-          if (i < this.props.x-1 && !includes(this.state.revealedButtons, (i+1)*10+j) && !includes(this.state.flaggedButtons, (i+1)*10+j)) {
-            this.revealArray(i+1, j);
-          }
-                  
-          if (j < this.props.y-1 && !includes(this.state.revealedButtons, i*10+j+1) && !includes(this.state.flaggedButtons, i*10+j+1)) {
-            this.revealArray(i, j+1);
-          }
-          
-          if (i > 0 && !includes(this.state.revealedButtons, (i-1)*10+j) && !includes(this.state.flaggedButtons, (i-1)*10+j)) {
-            this.revealArray(i-1, j);
-          }
-          
-          if (j > 0 && !includes(this.state.revealedButtons, i*10+j-1) && !includes(this.state.flaggedButtons, i*10+j-1)) {
-            this.revealArray(i, j-1);
-          }      
+        else {
+          this.flags(i, j);
         }
       }
+      else{  
+        const { revealedButtons }= this.state;
+        const weightedIndex = i*10 + j;
+        const revealIndex = revealedButtons.indexOf(weightedIndex);
+        if (revealIndex < 0) {
+          revealedButtons.push(weightedIndex);
+          this.setState({ revealedButtons });
+          if (!stopRecursion) {
+            if (this.state.board[i][j]==this.bomb){
+              this.revealAllBombs();
+            }
+            if (this.state.board[i][j] == 0){
+              if (i < this.props.x-1 && !includes(this.state.revealedButtons, (i+1)*10+j) && !includes(this.state.flaggedButtons, (i+1)*10+j)) {
+                this.revealArray(i+1, j);
+              }
+                      
+              if (j < this.props.y-1 && !includes(this.state.revealedButtons, i*10+j+1) && !includes(this.state.flaggedButtons, i*10+j+1)) {
+                this.revealArray(i, j+1);
+              }
+              
+              if (i > 0 && !includes(this.state.revealedButtons, (i-1)*10+j) && !includes(this.state.flaggedButtons, (i-1)*10+j)) {
+                this.revealArray(i-1, j);
+              }
+              
+              if (j > 0 && !includes(this.state.revealedButtons, i*10+j-1) && !includes(this.state.flaggedButtons, i*10+j-1)) {
+                this.revealArray(i, j-1);
+              }      
+            }
+          }
+        }
+      }
+      lost=false;
     }
   }
 
@@ -166,25 +196,36 @@ export default class Gameboard extends Component {
     this.setState({ flaggedBomb });
   }
   flags = (i,j) => {
-    let { flaggedButtons } = this.state;
-    const weightedIndex = i*10 + j;
-    const flagIndex = flaggedButtons.indexOf(weightedIndex);
-    if (flagIndex >= 0) {
-      flaggedButtons.splice(flagIndex, 1);
-      if(this.state.board[i][j]==this.bomb){
-        this.flaggedBombs(i,j,true);
+    const allChecked = this.state.revealedButtons.length + this.state.flaggedButtons.length;
+    const areAllChecked = allChecked === (this.props.x * this.props.y);
+    const areAllBombsChecked = (difference(this.state.flaggedButtons, this.state.flaggedBomb).length === 0) && (difference(this.state.flaggedBomb, this.state.flaggedButtons).length === 0);
+    if ((areAllChecked && areAllBombsChecked && !this.state.completed) || (this.state.completed)){
+        ToastAndroid.showWithGravity('Ab kya chahiye', ToastAndroid.SHORT, ToastAndroid.BOTTOM);
       }
-    } 
-    else {
-      flaggedButtons.push(weightedIndex);
-      if(this.state.board[i][j]==this.bomb){
-        this.flaggedBombs(i,j);
+    else{
+      let { flaggedButtons } = this.state;
+      const weightedIndex = i*10 + j;
+      const flagIndex = flaggedButtons.indexOf(weightedIndex);
+      if (this.state.revealedButtons.indexOf(weightedIndex)>=0){
+        ToastAndroid.showWithGravity('What the fuck are you doing', ToastAndroid.SHORT, ToastAndroid.BOTTOM);
       }
+      else if (flagIndex >= 0) {
+        flaggedButtons.splice(flagIndex, 1);
+        if(this.state.board[i][j]==this.bomb){
+          this.flaggedBombs(i,j,true);
+        }
+      } 
+      else {
+        flaggedButtons.push(weightedIndex);
+        if(this.state.board[i][j]==this.bomb){
+          this.flaggedBombs(i,j);
+        }
+      }
+      this.setState({ flaggedButtons });
     }
-    this.setState({ flaggedButtons });
   }
 
-  componentWillMount = () => {
+  renderBoard = () => {
     const cols=this.props.x;
     const rows=this.props.y;
     const c = [];
@@ -249,7 +290,6 @@ export default class Gameboard extends Component {
         }
     }
     this.setState({ board: c });
-    console.log(c)
   };
 
   checkIfRevealed = (i, j, flag) => {
@@ -262,48 +302,41 @@ export default class Gameboard extends Component {
   }
 
   buttons = () => this.state.board.map((rowButtons, x) => {
-  	return(
-  		<View style={{flexDirection: 'row'}} key={x}>
-  		{rowButtons.map((rowButton, y) => {
+    return(
+      <View style={{flexDirection: 'row'}} key={`rowbutton-${x}`}>
+      {rowButtons.map((rowButton, y) => {
         const isFlagged = this.checkIfRevealed(x, y, true);
         const isDiffused = this.checkIfDiffused(x,y);
-  			return(
-  				<View style={styles.buttonView} key={y}> 
-		  			<TouchableHighlight style={flex}
-	  			  		onPress={() => this.revealArray(x, y)}
-                onLongPress={() => this.flags(x, y)}>
+        return(
+          <View style={styles.buttonView} key={`button-${x}-${y}`}> 
+            <TouchableHighlight style={flex}
+                onPress={() => this.revealArray(x, y)}
+                onLongPress={() => this.flags(x, y)}
+                >
                 <Text style={{
                   ...flex,
                   ...styles.button,
                   ...styles.buttonView,
-                  color: isFlagged ? this.colors.flag : this.colors[this.state.board[x][y]] || this.colors.default
+                  color: isFlagged ? colors.flag : colors[this.state.board[x][y]] || colors.default
                 }}>
-	  			  		  {(isDiffused && this.completed) ? this.diffusedBomb : isFlagged ? this.flag : this.checkIfRevealed(x,y) ? `${this.state.board[x][y]}` :  ''}
+                  {(isDiffused && this.state.completed) ? this.diffusedBomb : isFlagged ? this.state.flag : this.checkIfRevealed(x,y) ? `${this.state.board[x][y]}` :  ''}
                 </Text>
-		  			</TouchableHighlight>
-	  			</View>
-			)}
-  		)}
-  		</View>		
+            </TouchableHighlight>
+          </View>
+      )}
+      )}
+      </View>   
 
-  		)
+      )
   });
 
   
   render()  {
     const navigator = this.props.navigator;
-    const allChecked = this.state.revealedButtons.length + this.state.flaggedButtons.length;
-    const areAllChecked = allChecked === (this.props.x * this.props.y);
-    const areAllBombsChecked = (difference(this.state.flaggedButtons, this.state.flaggedBomb).length === 0) && (difference(this.state.flaggedBomb, this.state.flaggedButtons).length === 0);
-    if (areAllChecked && areAllBombsChecked){
-      Alert.alert("Aaho, fadle !");
-    }
-    if (this.completed){
-      Alert.alert("Chal bc !")
-    } 
+     
     // when all are flagged
-	  return(
-		<ScrollView contentContainerStyle={styles2.contentContainer}>
+    return(
+    <ScrollView contentContainerStyle={styles2.contentContainer}>
       <View style={styles1.view}>
         <Button
                 onPress={() => {navigator.replace({id: 'IndexPage',});}}
@@ -313,19 +346,19 @@ export default class Gameboard extends Component {
         />
       </View>
       <View style={styles.view}>
-		    {this.buttons()}
+        {this.buttons()}
       </View>
       <View style={styles.view}>
         <Button
-                onPress={() => {navigator.replace({id: 'Gameboard',});}}
-                title="Refresh"
+                onPress={() => this.newGame()}
+                title="New Game"
                 color="#841584"
         />  
       </View>
 
-		</ScrollView>
+    </ScrollView>
 
-	  );
+    );
   }
 
 }

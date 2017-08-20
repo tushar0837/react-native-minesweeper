@@ -1,5 +1,13 @@
-{
-  "expo": {
-    "sdkVersion": "18.0.0"
-  }
-}
+ {
+   "expo": {
+    "name": "MineSweeper",
+    "version": "1.0.0",
+    "sdkVersion": "18.0.0",
+    "ios": {
+      "bundleIdentifier": "com.newmen.minesweeper"
+    },
+    "android": {
+      "package": "com.newmen.minesweeper"
+    }
+   }
+ }
